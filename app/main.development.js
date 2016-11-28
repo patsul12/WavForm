@@ -1,4 +1,4 @@
-import { app, ipcMain, BrowserWindow, Menu, shell, dialog } from 'electron';
+import { app, ipcMain, BrowserWindow, Menu, shell, dialog, screen } from 'electron';
 import configureStore from './shared/store/configureStore';
 import pify from 'pify';
 import jsonStorage from 'electron-json-storage';
@@ -58,11 +58,18 @@ app.on('ready', async () => {
   });
   await installExtensions();
 
+  let primaryDisplay = screen.getPrimaryDisplay();
+  let screenSize = primaryDisplay.workAreaSize;
+  let bounds = primaryDisplay.bounds;
+  let mainWindowWidth = screenSize.width * 0.75;
+  let moduleWindowWidth = screenSize.width * 0.25;
 
   mainWindow = new BrowserWindow({
     show: false,
-    width: 1024,
-    height: 728
+    width: mainWindowWidth,
+    height: screenSize.height,
+    x: bounds.x,
+    y: bounds.y
   });
 
   mainWindow.loadURL(`file://${__dirname}/renderer/main/app.html`);
@@ -78,8 +85,10 @@ app.on('ready', async () => {
 
   moduleSelectWindow = new BrowserWindow({
     show: true,
-    width: 200,
-    height: 500
+    width: moduleWindowWidth,
+    height: screenSize.height,
+    x: bounds.x + mainWindowWidth,
+    y: bounds.y
   });
 
   moduleSelectWindow.loadURL(`file://${__dirname}/renderer/moduleSelect/moduleSelect.html`);
@@ -308,3 +317,5 @@ app.on('ready', async () => {
     mainWindow.setMenu(menu);
   }
 });
+
+app.on('uncaughtException', (error) => { dialog.showErrorBox(error.message) });
